@@ -8,6 +8,7 @@ export class MulticastSocket {
   #multicastPort: number;
   #receivePromise: any;
   #messageListener: any;
+  #joined = false;
 
   constructor() {}
 
@@ -25,12 +26,18 @@ export class MulticastSocket {
 
     return new Promise<void>((res, rej) => {
       this.#socket.on("listening", () => res());
-      this.#socket.bind(this.#multicastPort, () => {});
+      if (!this.#joined) this.#socket.bind(this.#multicastPort, () => {});
+      else
+        this.#socket.bind(this.#multicastPort, this.#multicastAddr, () => {});
     });
   }
 
-  join(multicastAddr: string) {
+  async join(multicastAddr: string) {
+    this.#joined = true;
+    await this.close();
     this.#multicastAddr = multicastAddr;
+    await this.start(this.#multicastPort);
+    console.log(`Joined ${this.#multicastAddr}:${this.#multicastPort}`);
     this.#socket.addMembership(multicastAddr);
   }
 
@@ -73,5 +80,12 @@ export class MulticastSocket {
       thisRef.#receivePromise(data);
       thisRef.#receivePromise = undefined;
     }
+  }
+
+  async close() {
+    await new Promise<void>((res, rej) => {
+      this.#socket.close(res);
+    });
+    this.#socket = null;
   }
 }
