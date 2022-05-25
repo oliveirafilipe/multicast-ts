@@ -1,7 +1,10 @@
-import { Message, MulticastSocketCreator } from "../MulticastSocket";
+import { Message, MulticastSocket } from "../MulticastSocket";
 
 async function main() {
-  const socket = await MulticastSocketCreator.start(1234);
+  const socket = new MulticastSocket();
+  await socket.start(1234);
+
+  console.log("Client is Up. Listening for multicast messages");
 
   const onMessage = ({ message, rinfo }: Message) => {
     console.log(
